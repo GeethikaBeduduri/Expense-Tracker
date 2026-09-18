@@ -5,7 +5,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary accent — deep indigo/violet
+        darkbg: '#08090d',
+        darkcard: '#0f1118',
+        darkcardhover: '#161924',
+        darkborder: 'rgba(255, 255, 255, 0.08)',
+        // Primary accent — Electric Violet / Indigo
         primary: {
           50:  '#eef2ff',
           100: '#e0e7ff',
@@ -19,7 +23,7 @@ export default {
           900: '#312e81',
           950: '#1e1b4b',
         },
-        // Neutral gray for surfaces
+        // Fintech Neutral Slate / Graphite
         surface: {
           50:  '#f8fafc',
           100: '#f1f5f9',
@@ -28,14 +32,16 @@ export default {
           400: '#94a3b8',
           500: '#64748b',
           600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+          700: '#262c3d',
+          800: '#171b26',
+          850: '#11141e',
+          900: '#0c0e15',
+          950: '#07080c',
         },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
     },
   },

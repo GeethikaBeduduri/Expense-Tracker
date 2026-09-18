@@ -217,17 +217,17 @@ function Expenses() {
       />
 
       {/* ── Functional Search & Filter Toolbar ── */}
-      <div className="card p-4 space-y-3.5 border border-surface-200/80 dark:border-surface-800">
+      <div className="bg-[#0e111a] border border-white/[0.08] rounded-2xl p-5 shadow-2xl space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           {/* Search Input (Debounced / Real-time) */}
           <div className="md:col-span-2 relative">
-            <Search className="w-4 h-4 absolute inset-y-0 left-3 my-auto text-surface-400 pointer-events-none" />
+            <Search className="w-4 h-4 absolute inset-y-0 left-3.5 my-auto text-surface-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search expenses by title or note..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="form-input pl-9 text-sm"
+              className="form-input pl-10 text-sm"
             />
           </div>
 
@@ -263,13 +263,13 @@ function Expenses() {
         </div>
 
         {/* Secondary Filter Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-surface-100 dark:border-surface-800">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/[0.06]">
           <div className="flex flex-wrap items-center gap-2">
             {/* Payment Filter */}
             <select
               value={selectedPayment}
               onChange={(e) => setSelectedPayment(e.target.value)}
-              className="px-3 py-1.5 rounded-lg border border-surface-300 dark:border-surface-700 bg-white dark:bg-surface-900 text-xs font-medium text-surface-700 dark:text-surface-300 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl border border-white/[0.1] bg-[#090b11] text-xs font-semibold text-surface-300 cursor-pointer hover:border-white/[0.2] transition-colors"
             >
               {PAYMENT_METHODS.map((pm) => (
                 <option key={pm} value={pm}>
@@ -282,7 +282,7 @@ function Expenses() {
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="px-3 py-1.5 rounded-lg border border-surface-300 dark:border-surface-700 bg-white dark:bg-surface-900 text-xs font-medium text-surface-700 dark:text-surface-300 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl border border-white/[0.1] bg-[#090b11] text-xs font-semibold text-surface-300 cursor-pointer hover:border-white/[0.2] transition-colors"
             >
               <option value="all">All Dates</option>
               <option value="this_month">This Calendar Month</option>
@@ -292,7 +292,7 @@ function Expenses() {
             {hasActiveFilters && (
               <button
                 onClick={handleResetFilters}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-colors"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Reset Filters
@@ -300,8 +300,8 @@ function Expenses() {
             )}
           </div>
 
-          <div className="text-xs text-surface-400 dark:text-surface-500 font-medium">
-            Showing {filteredExpenses.length} of {expenses.length} results
+          <div className="text-xs text-surface-400 font-medium">
+            Showing <span className="text-white font-bold">{filteredExpenses.length}</span> of <span className="text-white font-bold">{expenses.length}</span> results
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Calendar, CreditCard, Tag, DollarSign, FileText } from 'lucide-react';
+import { X } from 'lucide-react';
 import { createExpense, updateExpense } from '../services/api.js';
 import { usePreferences } from '../context/PreferencesContext.jsx';
 
@@ -34,9 +34,11 @@ export default function ExpenseModal({
   isOpen,
   mode = 'add', // 'add' | 'edit' | 'view'
   initialData = null,
+  expenseData = null,
   onClose,
   onSuccess,
 }) {
+  const activeRecord = initialData || expenseData;
   const { currencySymbol, formatDate } = usePreferences();
   const [form, setForm] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
@@ -44,21 +46,21 @@ export default function ExpenseModal({
   const [serverError, setServerError] = useState(null);
 
   useEffect(() => {
-    if (initialData && (mode === 'edit' || mode === 'view')) {
+    if (activeRecord && (mode === 'edit' || mode === 'view')) {
       setForm({
-        title: initialData.title || '',
-        amount: initialData.amount !== undefined ? String(initialData.amount) : '',
-        category: initialData.category || 'Food',
-        date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : getTodayDate(),
-        paymentMethod: initialData.paymentMethod || 'UPI',
-        description: initialData.description || '',
+        title: activeRecord.title || '',
+        amount: activeRecord.amount !== undefined ? String(activeRecord.amount) : '',
+        category: activeRecord.category || 'Food',
+        date: activeRecord.date ? new Date(activeRecord.date).toISOString().split('T')[0] : getTodayDate(),
+        paymentMethod: activeRecord.paymentMethod || 'UPI',
+        description: activeRecord.description || '',
       });
     } else {
       setForm(INITIAL_FORM);
     }
     setErrors({});
     setServerError(null);
-  }, [initialData, mode, isOpen]);
+  }, [activeRecord, mode, isOpen]);
 
   if (!isOpen) return null;
 
@@ -104,8 +106,8 @@ export default function ExpenseModal({
       };
 
       let result;
-      if (isEdit && initialData?._id) {
-        result = await updateExpense(initialData._id, payload);
+      if (isEdit && activeRecord?._id) {
+        result = await updateExpense(activeRecord._id, payload);
       } else {
         result = await createExpense(payload);
       }
@@ -122,25 +124,25 @@ export default function ExpenseModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="card w-full max-w-lg p-6 bg-white dark:bg-surface-900 shadow-2xl border border-surface-200 dark:border-surface-800 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full max-w-lg p-6 sm:p-7 bg-[#0e111a] border border-white/[0.1] rounded-3xl shadow-2xl animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-surface-100 dark:border-surface-800">
+        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
           <div>
-            <h3 className="text-lg font-bold text-surface-900 dark:text-white">
-              {isView ? 'Transaction Details' : isEdit ? 'Edit Expense' : 'Record New Expense'}
+            <h3 className="text-lg font-extrabold text-white tracking-tight">
+              {isView ? 'Transaction Details' : isEdit ? 'Edit Transaction' : 'Record New Expense'}
             </h3>
-            <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
+            <p className="text-xs text-surface-400 mt-0.5">
               {isView
-                ? 'Comprehensive record metadata and audit trail'
+                ? 'Verified MongoDB ledger metadata'
                 : isEdit
-                ? 'Update amount, category, or notes'
-                : 'Log a new personal expense transaction'}
+                ? 'Update amount, category, date, or notes'
+                : 'Log a new expenditure in your personal ledger'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 p-1.5 rounded-lg transition-colors"
+            className="text-surface-400 hover:text-white p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -149,7 +151,7 @@ export default function ExpenseModal({
 
         {/* Server Error Notification */}
         {serverError && (
-          <div className="mt-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 text-xs font-medium">
+          <div className="mt-4 p-3 rounded-xl bg-rose-950/30 border border-rose-500/30 text-rose-300 text-xs font-medium">
             {serverError}
           </div>
         )}
@@ -158,11 +160,11 @@ export default function ExpenseModal({
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {/* Title */}
           <div>
-            <label className="form-label">Title</label>
+            <label className="form-label">Expense Title</label>
             <input
               name="title"
               type="text"
-              placeholder="e.g. Grocery shopping, Metro card"
+              placeholder="e.g. Grocery shopping, Cloud server"
               value={form.title}
               onChange={handleChange}
               disabled={isView || submitting}
@@ -201,7 +203,7 @@ export default function ExpenseModal({
                 value={form.category}
                 onChange={handleChange}
                 disabled={isView || submitting}
-                className={`form-input ${errors.category ? 'form-input-error' : ''}`}
+                className={`form-input cursor-pointer ${errors.category ? 'form-input-error' : ''}`}
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -216,7 +218,7 @@ export default function ExpenseModal({
           {/* Date & Payment Method */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="form-label">Date</label>
+              <label className="form-label">Transaction Date</label>
               <input
                 name="date"
                 type="date"
@@ -235,7 +237,7 @@ export default function ExpenseModal({
                 value={form.paymentMethod}
                 onChange={handleChange}
                 disabled={isView || submitting}
-                className={`form-input ${errors.paymentMethod ? 'form-input-error' : ''}`}
+                className={`form-input cursor-pointer ${errors.paymentMethod ? 'form-input-error' : ''}`}
               >
                 {PAYMENT_METHODS.map((pm) => (
                   <option key={pm} value={pm}>
@@ -249,11 +251,11 @@ export default function ExpenseModal({
 
           {/* Description */}
           <div>
-            <label className="form-label">Notes & Description (Optional)</label>
+            <label className="form-label">Description / Notes (Optional)</label>
             <textarea
               name="description"
               rows={3}
-              placeholder="Add optional notes, receipt details, or context..."
+              placeholder="Add optional context, invoice numbers, or vendor details..."
               value={form.description}
               onChange={handleChange}
               disabled={isView || submitting}
@@ -263,21 +265,21 @@ export default function ExpenseModal({
           </div>
 
           {/* Metadata if viewing */}
-          {isView && initialData && (
-            <div className="p-3 bg-surface-50 dark:bg-surface-800/60 rounded-xl border border-surface-200 dark:border-surface-700 text-xs text-surface-500 space-y-1">
+          {isView && activeRecord && (
+            <div className="p-3.5 bg-white/[0.02] rounded-2xl border border-white/[0.06] text-xs text-surface-400 space-y-1.5 font-mono">
               <div className="flex justify-between">
-                <span>Record ID:</span>
-                <span className="font-mono text-surface-700 dark:text-surface-300">{initialData._id}</span>
+                <span>MongoDB ID:</span>
+                <span className="text-white font-semibold">{activeRecord._id}</span>
               </div>
               <div className="flex justify-between">
-                <span>Recorded On:</span>
-                <span className="text-surface-700 dark:text-surface-300">{formatDate(initialData.createdAt)}</span>
+                <span>Created At:</span>
+                <span className="text-white">{formatDate(activeRecord.createdAt)}</span>
               </div>
             </div>
           )}
 
           {/* Footer Actions */}
-          <div className="pt-4 border-t border-surface-100 dark:border-surface-800 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-white/[0.08] flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
@@ -290,7 +292,7 @@ export default function ExpenseModal({
               <button
                 type="submit"
                 disabled={submitting}
-                className="btn-primary text-xs py-2 px-5 font-semibold shadow-xs"
+                className="btn-primary text-xs py-2 px-5 font-bold shadow-lg shadow-indigo-600/25"
               >
                 {submitting ? (
                   <span className="inline-flex items-center gap-1.5">

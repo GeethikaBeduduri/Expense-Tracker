@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Check, AlertCircle, PlusCircle } from 'lucide-react';
+import { ArrowLeft, PlusCircle, AlertCircle } from 'lucide-react';
 import { createExpense } from '../services/api.js';
 import { usePreferences } from '../context/PreferencesContext.jsx';
 import PageHeader from '../components/PageHeader.jsx';
@@ -23,7 +23,7 @@ const getTodayDate = () => new Date().toISOString().split('T')[0];
 const INITIAL_FORM = {
   title: '',
   amount: '',
-  category: '',
+  category: 'Food',
   description: '',
   date: getTodayDate(),
   paymentMethod: 'UPI',
@@ -33,7 +33,7 @@ function validate(values, currencySymbol) {
   const errors = {};
 
   if (!values.title.trim()) {
-    errors.title = 'Title is required';
+    errors.title = 'Expense title is required';
   } else if (values.title.trim().length > 100) {
     errors.title = 'Title cannot exceed 100 characters';
   }
@@ -68,7 +68,7 @@ function validate(values, currencySymbol) {
 
 function AddExpense() {
   const navigate = useNavigate();
-  const { currentCurrency } = usePreferences();
+  const { currencySymbol } = usePreferences();
   const [form, setForm] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -78,7 +78,7 @@ function AddExpense() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error on edit
+    // Clear field error on typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -88,7 +88,7 @@ function AddExpense() {
     e.preventDefault();
     setServerError(null);
 
-    const validationErrors = validate(form, currentCurrency.symbol);
+    const validationErrors = validate(form, currencySymbol);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
@@ -105,7 +105,7 @@ function AddExpense() {
 
       // Redirect to /expenses with success toast state
       navigate('/expenses', {
-        state: { toastMessage: `Expense "${form.title.trim()}" added successfully!` },
+        state: { toastMessage: `Expense "${form.title.trim()}" saved to ledger!` },
         replace: true,
       });
     } catch (err) {
@@ -122,173 +122,187 @@ function AddExpense() {
       {/* ── Page Header ── */}
       <PageHeader
         breadcrumb="Transactions"
-        title="Add Expense"
-        subtitle="Record a new transaction to maintain your financial ledger."
+        title="New Expense"
+        subtitle="Record where your money went and sync directly with MongoDB Atlas."
         secondaryAction={
-          <Link to="/expenses" className="btn-secondary text-xs shadow-2xs">
-            <ArrowLeft className="w-3.5 h-3.5 text-surface-500" />
+          <Link to="/expenses" className="btn-secondary text-xs">
+            <ArrowLeft className="w-3.5 h-3.5 text-surface-400" />
             Back to Expenses
           </Link>
         }
       />
 
-      {/* ── Main Form Card ── */}
-      <div className="card shadow-sm border border-surface-200 dark:border-surface-800">
+      {/* ── Form Card ── */}
+      <div className="bg-[#0e111a] border border-white/[0.09] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
         {/* Server Error Notification */}
         {serverError && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 flex items-start gap-3 text-rose-800 dark:text-rose-300 text-sm">
-            <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/30 flex items-start gap-3 text-rose-300 text-sm">
+            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold">Unable to Save Record</p>
-              <p className="text-xs text-rose-700 dark:text-rose-400 mt-0.5">{serverError}</p>
+              <p className="font-bold">Failed to Save Transaction</p>
+              <p className="text-xs text-rose-400 mt-0.5">{serverError}</p>
             </div>
           </div>
         )}
 
-        <form id="add-expense-form" onSubmit={handleSubmit} noValidate className="space-y-5">
-          {/* Field: Title */}
+        <form id="add-expense-form" onSubmit={handleSubmit} noValidate className="space-y-6">
+          {/* SECTION 1: TRANSACTION DETAILS */}
           <div>
-            <label htmlFor="title" className="form-label flex items-center justify-between">
-              <span>
-                Expense Title <span className="text-rose-500">*</span>
-              </span>
-              <span className="text-[11px] text-surface-400 font-normal">e.g., Grocery shopping, AWS Hosting</span>
-            </label>
-            <input
-              id="title"
-              name="title"
-              type="text"
-              placeholder="Enter expense title..."
-              value={form.title}
-              onChange={handleChange}
-              disabled={submitting}
-              className={`form-input ${errors.title ? 'form-input-error' : ''}`}
-            />
-            {errors.title && <p className="field-error">{errors.title}</p>}
-          </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 border-b border-white/[0.08] pb-1.5 mb-4 block">
+              Transaction Details
+            </span>
 
-          {/* Grid: Amount + Category */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {/* Amount with Currency Prefix */}
-            <div>
-              <label htmlFor="amount" className="form-label">
-                Amount <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-surface-500 font-semibold text-sm">
-                  {currentCurrency.symbol}
-                </div>
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <label htmlFor="title" className="form-label flex items-center justify-between">
+                  <span>
+                    Expense Title <span className="text-rose-400">*</span>
+                  </span>
+                  <span className="text-[11px] text-surface-500 font-normal">e.g., Grocery shopping, AWS hosting</span>
+                </label>
                 <input
-                  id="amount"
-                  name="amount"
-                  type="number"
-                  min="0.01"
-                  step="any"
-                  placeholder="0.00"
-                  value={form.amount}
+                  id="title"
+                  name="title"
+                  type="text"
+                  placeholder="Enter expense title..."
+                  value={form.title}
                   onChange={handleChange}
                   disabled={submitting}
-                  className={`form-input pl-8 ${errors.amount ? 'form-input-error' : ''}`}
+                  className={`form-input ${errors.title ? 'form-input-error' : ''}`}
                 />
+                {errors.title && <p className="field-error">{errors.title}</p>}
               </div>
-              {errors.amount && <p className="field-error">{errors.amount}</p>}
-            </div>
 
-            {/* Category Select */}
-            <div>
-              <label htmlFor="category" className="form-label">
-                Category <span className="text-rose-500">*</span>
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={form.category}
-                onChange={handleChange}
-                disabled={submitting}
-                className={`form-input ${errors.category ? 'form-input-error' : ''}`}
-              >
-                <option value="">Select a category</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              {errors.category && <p className="field-error">{errors.category}</p>}
+              {/* Grid: Amount + Category */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Amount */}
+                <div>
+                  <label htmlFor="amount" className="form-label">
+                    Amount <span className="text-rose-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-surface-400 font-bold text-sm">
+                      {currencySymbol}
+                    </div>
+                    <input
+                      id="amount"
+                      name="amount"
+                      type="number"
+                      min="0.01"
+                      step="any"
+                      placeholder="0.00"
+                      value={form.amount}
+                      onChange={handleChange}
+                      disabled={submitting}
+                      className={`form-input pl-8 font-mono ${errors.amount ? 'form-input-error' : ''}`}
+                    />
+                  </div>
+                  {errors.amount && <p className="field-error">{errors.amount}</p>}
+                </div>
+
+                {/* Category Select */}
+                <div>
+                  <label htmlFor="category" className="form-label">
+                    Category <span className="text-rose-400">*</span>
+                  </label>
+                  <select
+                    id="category"
+                    name="category"
+                    value={form.category}
+                    onChange={handleChange}
+                    disabled={submitting}
+                    className={`form-input cursor-pointer ${errors.category ? 'form-input-error' : ''}`}
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.category && <p className="field-error">{errors.category}</p>}
+                </div>
+              </div>
+
+              {/* Grid: Date + Payment Method */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Date */}
+                <div>
+                  <label htmlFor="date" className="form-label">
+                    Date <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    id="date"
+                    name="date"
+                    type="date"
+                    value={form.date}
+                    onChange={handleChange}
+                    disabled={submitting}
+                    className={`form-input ${errors.date ? 'form-input-error' : ''}`}
+                  />
+                  {errors.date && <p className="field-error">{errors.date}</p>}
+                </div>
+
+                {/* Payment Method */}
+                <div>
+                  <label htmlFor="paymentMethod" className="form-label">
+                    Payment Method <span className="text-rose-400">*</span>
+                  </label>
+                  <select
+                    id="paymentMethod"
+                    name="paymentMethod"
+                    value={form.paymentMethod}
+                    onChange={handleChange}
+                    disabled={submitting}
+                    className={`form-input cursor-pointer ${errors.paymentMethod ? 'form-input-error' : ''}`}
+                  >
+                    {PAYMENT_METHODS.map((pm) => (
+                      <option key={pm} value={pm}>
+                        {pm}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.paymentMethod && <p className="field-error">{errors.paymentMethod}</p>}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Grid: Date + Payment Method */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {/* Date */}
-            <div>
-              <label htmlFor="date" className="form-label">
-                Date <span className="text-rose-500">*</span>
-              </label>
-              <input
-                id="date"
-                name="date"
-                type="date"
-                value={form.date}
-                onChange={handleChange}
-                disabled={submitting}
-                className={`form-input ${errors.date ? 'form-input-error' : ''}`}
-              />
-              {errors.date && <p className="field-error">{errors.date}</p>}
-            </div>
-
-            {/* Payment Method */}
-            <div>
-              <label htmlFor="paymentMethod" className="form-label">
-                Payment Method <span className="text-rose-500">*</span>
-              </label>
-              <select
-                id="paymentMethod"
-                name="paymentMethod"
-                value={form.paymentMethod}
-                onChange={handleChange}
-                disabled={submitting}
-                className={`form-input ${errors.paymentMethod ? 'form-input-error' : ''}`}
-              >
-                {PAYMENT_METHODS.map((pm) => (
-                  <option key={pm} value={pm}>
-                    {pm}
-                  </option>
-                ))}
-              </select>
-              {errors.paymentMethod && <p className="field-error">{errors.paymentMethod}</p>}
-            </div>
-          </div>
-
-          {/* Field: Description / Notes */}
+          {/* SECTION 2: NOTES & METADATA */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="description" className="form-label mb-0">
-                Description / Notes <span className="text-surface-400 font-normal text-xs">(Optional)</span>
-              </label>
-              <span className="text-[11px] text-surface-400">
-                {form.description.length}/500
-              </span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 border-b border-white/[0.08] pb-1.5 mb-4 block">
+              Notes & Metadata
+            </span>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="description" className="form-label mb-0">
+                  Description / Context <span className="text-surface-500 font-normal text-xs">(Optional)</span>
+                </label>
+                <span className="text-[11px] text-surface-500 font-mono">
+                  {form.description.length}/500
+                </span>
+              </div>
+              <textarea
+                id="description"
+                name="description"
+                rows={3}
+                placeholder="Add optional notes, invoice details, vendor information..."
+                value={form.description}
+                onChange={handleChange}
+                disabled={submitting}
+                maxLength={500}
+                className={`form-input resize-none ${errors.description ? 'form-input-error' : ''}`}
+              />
+              {errors.description && <p className="field-error">{errors.description}</p>}
             </div>
-            <textarea
-              id="description"
-              name="description"
-              rows={3}
-              placeholder="Add optional notes, invoice details, or vendor..."
-              value={form.description}
-              onChange={handleChange}
-              disabled={submitting}
-              maxLength={500}
-              className={`form-input resize-none ${errors.description ? 'form-input-error' : ''}`}
-            />
-            {errors.description && <p className="field-error">{errors.description}</p>}
           </div>
 
           {/* Actions: Save & Cancel */}
-          <div className="pt-4 border-t border-surface-100 dark:border-surface-800 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-white/[0.08] flex items-center justify-end gap-3">
             <Link
               to="/expenses"
-              className="btn-secondary text-sm"
+              className="btn-secondary text-xs"
               tabIndex={submitting ? -1 : 0}
             >
               Cancel
@@ -297,18 +311,18 @@ function AddExpense() {
               type="submit"
               disabled={submitting}
               id="submit-expense-btn"
-              className="btn-primary shadow-xs min-w-[130px] justify-center"
+              className="btn-primary min-w-[140px]"
             >
               {submitting ? (
-                <>
+                <span className="inline-flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                   <span>Saving...</span>
-                </>
+                </span>
               ) : (
-                <>
+                <span className="inline-flex items-center gap-2">
                   <PlusCircle className="w-4 h-4" />
                   <span>Save Expense</span>
-                </>
+                </span>
               )}
             </button>
           </div>

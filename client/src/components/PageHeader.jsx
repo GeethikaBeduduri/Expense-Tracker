@@ -1,6 +1,5 @@
 /**
- * PageHeader — standardized page header.
- * Clean typography, breadcrumb, subtitle, and action buttons with dark mode support.
+ * PageHeader — bold, editorial dark fintech page header.
  */
 export default function PageHeader({
   title,
@@ -16,25 +15,28 @@ export default function PageHeader({
   const effectiveAction = primaryAction || action;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-surface-200/80 dark:border-surface-800 mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-white/[0.08] mb-6">
       <div>
         {breadcrumb && (
-          <p className="text-[11px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-1">
-            {breadcrumb}
-          </p>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500"></span>
+            <p className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-widest">
+              {breadcrumb}
+            </p>
+          </div>
         )}
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-surface-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             {title}
           </h1>
           {badge && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
               {badge}
             </span>
           )}
         </div>
         {effectiveSubtitle && (
-          <p className="text-sm text-surface-500 dark:text-surface-400 mt-1 font-normal leading-relaxed">
+          <p className="text-xs sm:text-sm text-surface-400 mt-1 font-normal leading-relaxed max-w-2xl">
             {effectiveSubtitle}
           </p>
         )}

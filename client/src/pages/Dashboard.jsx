@@ -19,20 +19,20 @@ import {
   Plus,
   ArrowRight,
   PieChart as PieIcon,
-  LineChart as ChartIcon,
+  Activity,
+  FileSpreadsheet,
   PiggyBank,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import { getExpenses } from '../services/api.js';
 import { usePreferences } from '../context/PreferencesContext.jsx';
 import PageHeader from '../components/PageHeader.jsx';
-import StatCard from '../components/StatCard.jsx';
 import Badge from '../components/Badge.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
-import ChartCard from '../components/ChartCard.jsx';
 import ExpenseModal from '../components/ExpenseModal.jsx';
 import Toast from '../components/Toast.jsx';
-import { StatCardSkeleton } from '../components/LoadingSkeleton.jsx';
 
 const CATEGORY_COLORS = {
   Food: '#f59e0b',
@@ -45,13 +45,6 @@ const CATEGORY_COLORS = {
   Other: '#64748b',
 };
 
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
-}
-
 function Dashboard() {
   const navigate = useNavigate();
   const { formatAmount, formatDate, currencySymbol } = usePreferences();
@@ -60,7 +53,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Modal states
+  // Modal states for inspecting and adding expenses
   const [modalState, setModalState] = useState({ isOpen: false, mode: 'add', data: null });
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -71,7 +64,7 @@ function Dashboard() {
       const response = await getExpenses();
       setExpenses(response.data?.data || []);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Unable to retrieve dashboard financial data.');
+      setError(err.response?.data?.message || err.message || 'Unable to retrieve financial records from server.');
     } finally {
       setLoading(false);
     }
@@ -81,7 +74,7 @@ function Dashboard() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  // Aggregate summary metrics strictly from database records
+  // Aggregate statistics strictly from actual database records
   const stats = useMemo(() => {
     const total = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
     const count = expenses.length;
@@ -98,7 +91,7 @@ function Dashboard() {
       })
       .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
-    const monthName = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+    const monthName = now.toLocaleString('default', { month: 'long' });
 
     return {
       totalFormatted: formatAmount(total),
@@ -111,8 +104,8 @@ function Dashboard() {
     };
   }, [expenses, formatAmount]);
 
-  // Spending over time (monthly aggregation for AreaChart)
-  const monthlyTimelineData = useMemo(() => {
+  // Timeline data for Hero AreaChart
+  const timelineData = useMemo(() => {
     if (expenses.length === 0) return [];
 
     const monthMap = {};
@@ -137,11 +130,16 @@ function Dashboard() {
       catMap[item.category] = (catMap[item.category] || 0) + Number(item.amount);
     });
 
-    return Object.entries(catMap).map(([name, value]) => ({
-      name,
-      value: Math.round(value),
-      color: CATEGORY_COLORS[name] || CATEGORY_COLORS.Other,
-    }));
+    const total = Object.values(catMap).reduce((a, b) => a + b, 0);
+
+    return Object.entries(catMap)
+      .map(([name, value]) => ({
+        name,
+        value: Math.round(value),
+        percentage: total > 0 ? Math.round((value / total) * 100) : 0,
+        color: CATEGORY_COLORS[name] || CATEGORY_COLORS.Other,
+      }))
+      .sort((a, b) => b.value - a.value);
   }, [expenses]);
 
   const recentTransactions = useMemo(() => {
@@ -150,255 +148,334 @@ function Dashboard() {
 
   const handleModalSuccess = (savedExpense, actionType) => {
     fetchDashboardData();
-    setToastMessage(`Transaction ${actionType === 'added' ? 'recorded' : 'updated'} successfully`);
+    setToastMessage(`Expense ${actionType === 'added' ? 'recorded' : 'updated'} successfully`);
   };
 
   return (
-    <div className="space-y-6">
-      {/* ── Dashboard Page Header ── */}
+    <div className="space-y-8">
+      {/* ── Page Header ── */}
       <PageHeader
-        breadcrumb="Executive Overview"
-        title={`${getGreeting()}, Welcome`}
-        subtitle="Here is a high-level summary of your personal finances, spending velocity, and category allocations."
+        breadcrumb="Executive Financial Overview"
+        title="Command Center"
+        subtitle="Your real-time personal finance picture, spending velocity, and category allocations synced with MongoDB Atlas."
         primaryAction={
           <button
             onClick={() => setModalState({ isOpen: true, mode: 'add', data: null })}
-            className="btn-primary shadow-xs font-semibold"
+            className="btn-primary"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Add Expense</span>
+            <span>Record Expense</span>
           </button>
         }
       />
 
-      {/* ── Error State (if API fails) ── */}
+      {/* ── Error State ── */}
       {!loading && error && (
         <ErrorState
-          title="Dashboard Unavailable"
+          title="Connection Error"
           message={error}
           onRetry={fetchDashboardData}
         />
       )}
 
-      {/* ── ROW 1: 4 Key Metric Cards ── */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <StatCard
-            id="kpi-total-spending"
-            label="Total Spending"
-            value={stats.totalFormatted}
-            caption="Cumulative expenses to date"
-            indicatorText="All Time"
-            color="bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400"
-            icon={<Wallet className="w-5 h-5 stroke-[2]" />}
-          />
+      {/* ── HERO ROW: Asymmetrical Financial Showcase ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Left Hero Panel (8 Cols on LG) */}
+        <div className="lg:col-span-8 bg-gradient-to-br from-[#10131d] via-[#0c0e15] to-[#090b10] border border-white/[0.09] rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+          {/* Subtle Ambient Radial Glow */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/[0.07] rounded-full blur-3xl pointer-events-none" />
 
-          <StatCard
-            id="kpi-this-month"
-            label="This Month"
-            value={stats.thisMonthFormatted}
-            caption={`Recorded in ${stats.monthName}`}
-            indicatorText="Active Month"
-            color="bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400"
-            icon={<Calendar className="w-5 h-5 stroke-[2]" />}
-          />
-
-          <StatCard
-            id="kpi-transactions"
-            label="Transactions"
-            value={stats.countFormatted}
-            caption="Total entries stored in database"
-            indicatorText={`${stats.rawCount} items`}
-            indicatorColor="bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800"
-            color="bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400"
-            icon={<Receipt className="w-5 h-5 stroke-[2]" />}
-          />
-
-          <StatCard
-            id="kpi-average"
-            label="Average Expense"
-            value={stats.averageFormatted}
-            caption="Mean cost per recorded entry"
-            indicatorText="Per Record"
-            indicatorColor="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
-            color="bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400"
-            icon={<TrendingUp className="w-5 h-5 stroke-[2]" />}
-          />
-        </div>
-      )}
-
-      {/* ── ROW 2: Interactive Real Charts (Recharts) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Spending Over Time (Area Chart - 2 cols) */}
-        <div className="lg:col-span-2">
-          <ChartCard
-            title="Spending Velocity"
-            subtitle="Monthly cumulative burn rate based on actual transaction dates"
-            isEmpty={!loading && monthlyTimelineData.length === 0}
-            emptyMessage="No spending history recorded yet."
-            action={
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300">
-                Timeline
+          {/* Top Row: Label & Status Indicator */}
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-400 shadow-sm shadow-indigo-400" />
+              <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">
+                Total Expenditure
               </span>
-            }
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthlyTimelineData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="spendingGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="name"
-                  stroke="#94a3b8"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="#94a3b8"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v) => `${currencySymbol}${v}`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0f172a',
-                    borderColor: '#334155',
-                    borderRadius: '12px',
-                    color: '#fff',
-                    fontSize: '12px',
-                  }}
-                  formatter={(value) => [`${currencySymbol}${value}`, 'Spent']}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="amount"
-                  stroke="#6366f1"
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#spendingGradient)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartCard>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-extrabold tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              LIVE MONGODB SYNC
+            </div>
+          </div>
+
+          {/* Big Editorial Number */}
+          <div className="relative z-10 my-6">
+            <p className="text-4xl sm:text-6xl font-black tracking-tight text-white font-mono">
+              {stats.totalFormatted}
+            </p>
+            <p className="text-xs sm:text-sm text-surface-400 mt-2 font-normal">
+              Based on your actual verified financial records in MongoDB.
+            </p>
+          </div>
+
+          {/* Compact 3-Pill Stat Strip */}
+          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <Calendar className="w-4 h-4 stroke-[2]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-surface-400 font-bold">
+                  {stats.monthName}
+                </p>
+                <p className="text-sm font-bold text-white font-mono truncate">
+                  {stats.thisMonthFormatted}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
+                <Receipt className="w-4 h-4 stroke-[2]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-surface-400 font-bold">
+                  Transactions
+                </p>
+                <p className="text-sm font-bold text-white font-mono truncate">
+                  {stats.countFormatted} entries
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-4 h-4 stroke-[2]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-surface-400 font-bold">
+                  Average Ticket
+                </p>
+                <p className="text-sm font-bold text-white font-mono truncate">
+                  {stats.averageFormatted}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Integrated Visual Chart Area */}
+          <div className="relative z-10 pt-4 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between mb-3 text-xs">
+              <span className="font-bold text-surface-300">Spending Velocity Curve</span>
+              <span className="text-surface-500 text-[11px]">Monthly Aggregate</span>
+            </div>
+
+            {timelineData.length > 0 ? (
+              <div className="h-48 sm:h-56 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="heroGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="name"
+                      stroke="#475569"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      stroke="#475569"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(v) => `${currencySymbol}${v}`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#0c0e15',
+                        borderColor: 'rgba(255, 255, 255, 0.12)',
+                        borderRadius: '12px',
+                        color: '#ffffff',
+                        fontSize: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)',
+                      }}
+                      formatter={(value) => [`${currencySymbol}${value}`, 'Spent']}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="amount"
+                      stroke="#818cf8"
+                      strokeWidth={2.5}
+                      fill="url(#heroGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="py-10 text-center rounded-2xl bg-white/[0.02] border border-dashed border-white/[0.08]">
+                <Activity className="w-8 h-8 text-surface-500 mx-auto mb-2" />
+                <p className="text-sm font-bold text-surface-300">No Spending History</p>
+                <p className="text-xs text-surface-500 max-w-sm mx-auto mt-1">
+                  Start tracking your spending to activate your velocity chart.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Category Breakdown (Donut Chart - 1 col) */}
-        <div className="lg:col-span-1">
-          <ChartCard
-            title="Category Allocation"
-            subtitle="Distribution of expenditure across categories"
-            isEmpty={!loading && categoryPieData.length === 0}
-            emptyMessage="No category data available."
-            action={
+        {/* Right Category Allocation Panel (4 Cols on LG) */}
+        <div className="lg:col-span-4 bg-[#0e111a] border border-white/[0.09] rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
+              <div>
+                <h2 className="text-base font-bold text-white tracking-tight">
+                  Category Allocation
+                </h2>
+                <p className="text-xs text-surface-400 mt-0.5">
+                  Spending share by category
+                </p>
+              </div>
               <Link
                 to="/analytics"
-                className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
               >
                 Analytics →
               </Link>
-            }
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categoryPieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={80}
-                  paddingAngle={4}
-                  dataKey="value"
-                >
-                  {categoryPieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+            </div>
+
+            {categoryPieData.length > 0 ? (
+              <div>
+                {/* Donut Chart */}
+                <div className="h-52 w-full my-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryPieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={58}
+                        outerRadius={82}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {categoryPieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="#0e111a" strokeWidth={2} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#0c0e15',
+                          borderColor: 'rgba(255, 255, 255, 0.12)',
+                          borderRadius: '10px',
+                          color: '#ffffff',
+                          fontSize: '11px',
+                        }}
+                        formatter={(value) => [`${currencySymbol}${value}`, 'Spent']}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Top Category List */}
+                <div className="space-y-2.5 mt-4">
+                  {categoryPieData.slice(0, 4).map((cat) => (
+                    <div
+                      key={cat.name}
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05] text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        <span className="font-semibold text-white truncate">
+                          {cat.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[11px] font-bold text-surface-400">
+                          {cat.percentage}%
+                        </span>
+                        <span className="font-mono font-bold text-white">
+                          {formatAmount(cat.value)}
+                        </span>
+                      </div>
+                    </div>
                   ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0f172a',
-                    borderColor: '#334155',
-                    borderRadius: '12px',
-                    color: '#fff',
-                    fontSize: '12px',
-                  }}
-                  formatter={(value) => [`${currencySymbol}${value}`, 'Total']}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
+                </div>
+              </div>
+            ) : (
+              <div className="py-14 text-center">
+                <PieIcon className="w-9 h-9 text-surface-600 mx-auto mb-2.5 stroke-[1.5]" />
+                <p className="text-sm font-bold text-surface-300">No Category Data</p>
+                <p className="text-xs text-surface-500 mt-1 max-w-xs mx-auto">
+                  Category breakdown will populate here once transactions are recorded.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 mt-6 border-t border-white/[0.06] text-center">
+            <Link
+              to="/budgets"
+              className="text-xs font-semibold text-surface-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <PiggyBank className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Configure category budget limits →</span>
+            </Link>
+          </div>
         </div>
+
       </div>
 
-      {/* ── ROW 3: Recent Transactions & Quick Actions ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Transactions Stream (2 cols) */}
-        <div className="card lg:col-span-2 flex flex-col justify-between">
+      {/* ── ROW 2: Recent Ledger & Quick Shortcuts (Asymmetric) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Recent Transactions Ledger (8 Cols on LG) */}
+        <div className="lg:col-span-8 bg-[#0e111a] border border-white/[0.09] rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-surface-100 dark:border-surface-800">
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
               <div>
-                <h2 className="text-base font-bold text-surface-900 dark:text-white">
+                <h2 className="text-base font-bold text-white tracking-tight">
                   Recent Transactions
                 </h2>
-                <p className="text-xs text-surface-400 dark:text-surface-500">
+                <p className="text-xs text-surface-400 mt-0.5">
                   Latest ledger expenditures synced with MongoDB
                 </p>
               </div>
               {expenses.length > 0 && (
                 <Link
                   to="/expenses"
-                  className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 inline-flex items-center gap-1 transition-colors"
+                  className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
                 >
-                  View all ({expenses.length})
+                  <span>View All ({expenses.length})</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               )}
             </div>
 
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((n) => (
-                  <div
-                    key={n}
-                    className="h-14 bg-surface-100 dark:bg-surface-800/60 rounded-xl animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : recentTransactions.length > 0 ? (
-              <div className="divide-y divide-surface-100 dark:divide-surface-800">
+            {recentTransactions.length > 0 ? (
+              <div className="divide-y divide-white/[0.05]">
                 {recentTransactions.map((item) => (
                   <div
                     key={item._id}
                     onClick={() => setModalState({ isOpen: true, mode: 'view', data: item })}
-                    className="py-3.5 flex items-center justify-between gap-4 hover:bg-surface-50/60 dark:hover:bg-surface-800/40 rounded-xl px-2.5 transition-colors cursor-pointer"
+                    className="py-3.5 flex items-center justify-between gap-4 hover:bg-white/[0.03] rounded-2xl px-3 transition-colors cursor-pointer"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">
+                      <p className="text-sm font-bold text-white truncate">
                         {item.title}
                       </p>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-2 mt-1">
                         <Badge category={item.category} />
-                        <span className="text-xs text-surface-400 dark:text-surface-500">
+                        <span className="text-xs text-surface-400">
                           {formatDate(item.date)}
                         </span>
-                        <span className="text-xs text-surface-400 dark:text-surface-500 hidden sm:inline">
+                        <span className="text-xs text-surface-500 hidden sm:inline">
                           · {item.paymentMethod}
                         </span>
                       </div>
                     </div>
+
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-surface-900 dark:text-white">
+                      <p className="text-sm sm:text-base font-black font-mono text-emerald-400">
                         {formatAmount(item.amount)}
                       </p>
                     </div>
@@ -408,12 +485,12 @@ function Dashboard() {
             ) : (
               <EmptyState
                 compact
-                title="No spending data yet"
-                description="Start recording your expenses to see spending trends and financial insights here."
+                title="No expenses recorded yet"
+                description="Start tracking your spending to see your financial insights here."
                 action={
                   <button
                     onClick={() => setModalState({ isOpen: true, mode: 'add', data: null })}
-                    className="btn-primary text-xs py-2 px-4 shadow-xs"
+                    className="btn-primary text-xs py-2 px-4 shadow-lg shadow-indigo-600/25"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Record First Expense
@@ -424,103 +501,111 @@ function Dashboard() {
           </div>
 
           {recentTransactions.length > 0 && (
-            <div className="pt-3 border-t border-surface-100 dark:border-surface-800 flex justify-between items-center text-xs text-surface-400 dark:text-surface-500">
+            <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs text-surface-400">
               <span>Showing {recentTransactions.length} of {expenses.length} records</span>
-              <Link to="/expenses" className="text-primary-600 dark:text-primary-400 font-semibold hover:underline">
+              <Link
+                to="/expenses"
+                className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors"
+              >
                 Manage full ledger →
               </Link>
             </div>
           )}
         </div>
 
-        {/* Quick Actions Panel (1 col) */}
-        <div className="card flex flex-col justify-between">
+        {/* Quick Actions & Workspace Panel (4 Cols on LG) */}
+        <div className="lg:col-span-4 bg-[#0e111a] border border-white/[0.09] rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col justify-between">
           <div>
-            <div className="pb-3.5 mb-4 border-b border-surface-100 dark:border-surface-800">
-              <h2 className="text-base font-bold text-surface-900 dark:text-white">
+            <div className="pb-4 border-b border-white/[0.08] mb-4">
+              <h2 className="text-base font-bold text-white tracking-tight">
                 Quick Shortcuts
               </h2>
-              <p className="text-xs text-surface-400 dark:text-surface-500">
-                Direct actions to manage your platform
+              <p className="text-xs text-surface-400 mt-0.5">
+                Rapid personal finance operations
               </p>
             </div>
 
             <div className="space-y-3">
               <button
                 onClick={() => setModalState({ isOpen: true, mode: 'add', data: null })}
-                className="w-full p-3.5 rounded-xl border border-primary-200 dark:border-primary-900/60 bg-primary-50/50 dark:bg-primary-950/30 hover:bg-primary-50 dark:hover:bg-primary-950/60 transition-all flex items-start gap-3.5 text-left group"
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] hover:border-indigo-500/30 text-left transition-all group"
               >
-                <div className="w-9 h-9 rounded-lg bg-primary-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                  <Plus className="w-5 h-5 stroke-[2.5]" />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white">Record Transaction</p>
+                    <p className="text-[11px] text-surface-400">Post entry to ledger</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                    Add New Expense
-                  </p>
-                  <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
-                    Log an expenditure with amount, category, and date.
-                  </p>
-                </div>
+                <ArrowRight className="w-4 h-4 text-surface-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
               </button>
 
-              <button
-                onClick={() => navigate('/expenses')}
-                className="w-full p-3.5 rounded-xl border border-surface-200/80 dark:border-surface-800 bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100/70 dark:hover:bg-surface-800 transition-all flex items-start gap-3.5 text-left group"
+              <Link
+                to="/expenses"
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] hover:border-indigo-500/30 text-left transition-all group"
               >
-                <div className="w-9 h-9 rounded-lg bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 flex items-center justify-center shrink-0 border border-surface-200 dark:border-surface-700">
-                  <Receipt className="w-4 h-4" />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Receipt className="w-4 h-4 stroke-[2]" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white">Browse Ledger</p>
+                    <p className="text-[11px] text-surface-400">Search, filter & sort</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                    Manage Expenses
-                  </p>
-                  <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
-                    Filter, search, audit, edit, or delete transactions.
-                  </p>
-                </div>
-              </button>
+                <ArrowRight className="w-4 h-4 text-surface-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+              </Link>
 
-              <button
-                onClick={() => navigate('/budgets')}
-                className="w-full p-3.5 rounded-xl border border-surface-200/80 dark:border-surface-800 bg-surface-50/50 dark:bg-surface-800/30 hover:bg-surface-100/70 dark:hover:bg-surface-800 transition-all flex items-start gap-3.5 text-left group"
+              <Link
+                to="/reports"
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] hover:border-indigo-500/30 text-left transition-all group"
               >
-                <div className="w-9 h-9 rounded-lg bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 flex items-center justify-center shrink-0 border border-surface-200 dark:border-surface-700">
-                  <PiggyBank className="w-4 h-4" />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <FileSpreadsheet className="w-4 h-4 stroke-[2]" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white">Export Audit CSV</p>
+                    <p className="text-[11px] text-surface-400">Spreadsheet-ready data</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                    Budget Planning
-                  </p>
-                  <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
-                    Set limits per category and track spend progress.
-                  </p>
-                </div>
-              </button>
+                <ArrowRight className="w-4 h-4 text-surface-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+              </Link>
             </div>
           </div>
 
-          <div className="mt-6 p-3 rounded-xl bg-surface-50 dark:bg-surface-850 border border-surface-200/60 dark:border-surface-800 text-center">
-            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300">
-              Personal Finance Engine
-            </p>
-            <p className="text-[11px] text-surface-400 dark:text-surface-500 mt-0.5">
-              Real-time synchronization active
+          <div className="p-4 rounded-2xl bg-indigo-950/20 border border-indigo-500/20 mt-6">
+            <div className="flex items-center gap-2 text-xs font-bold text-indigo-300">
+              <Zap className="w-4 h-4 text-indigo-400" />
+              Real Data Guarantee
+            </div>
+            <p className="text-[11px] text-surface-400 mt-1 leading-relaxed">
+              Every chart and calculation is computed live from MongoDB Atlas. No mock arrays or static samples.
             </p>
           </div>
         </div>
+
       </div>
 
-      {/* ── Add / Edit / Inspect Expense Modal ── */}
+      {/* ── Transaction Modal (Add / Edit / View) ── */}
       <ExpenseModal
         isOpen={modalState.isOpen}
         mode={modalState.mode}
-        initialData={modalState.data}
+        expenseData={modalState.data}
         onClose={() => setModalState({ isOpen: false, mode: 'add', data: null })}
         onSuccess={handleModalSuccess}
       />
 
       {/* ── Toast Notification ── */}
-      <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+      {toastMessage && (
+        <Toast
+          message={toastMessage}
+          type="success"
+          onClose={() => setToastMessage(null)}
+        />
+      )}
     </div>
   );
 }

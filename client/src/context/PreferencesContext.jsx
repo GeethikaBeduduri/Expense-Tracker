@@ -25,7 +25,7 @@ export function PreferencesProvider({ children }) {
   });
 
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('et_theme') || 'light';
+    return localStorage.getItem('et_theme') || 'dark';
   });
 
   // Sync theme with DOM document element

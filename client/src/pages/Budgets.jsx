@@ -196,7 +196,7 @@ export default function Budgets() {
             return (
               <div
                 key={b._id}
-                className="card p-5 border border-surface-200/80 dark:border-surface-800 hover:border-surface-300 dark:hover:border-surface-700 transition-all flex flex-col justify-between"
+                className="bg-[#0e111a] border border-white/[0.08] hover:border-indigo-500/30 rounded-3xl p-6 shadow-2xl transition-all flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-surface-100 dark:border-surface-800">

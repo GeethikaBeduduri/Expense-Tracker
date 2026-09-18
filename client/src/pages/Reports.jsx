@@ -130,11 +130,11 @@ export default function Reports() {
       />
 
       {/* ── Period Selector Toolbar ── */}
-      <div className="card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border border-surface-200/80 dark:border-surface-800">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-surface-400" />
-          <span className="text-xs font-semibold text-surface-700 dark:text-surface-300">
-            Reporting Window:
+      <div className="bg-[#0e111a] border border-white/[0.08] rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
+        <div className="flex items-center gap-2.5">
+          <Calendar className="w-4 h-4 text-indigo-400" />
+          <span className="text-xs font-bold tracking-wide uppercase text-zinc-300">
+            Reporting Window
           </span>
         </div>
 
@@ -148,10 +148,10 @@ export default function Reports() {
             <button
               key={item.id}
               onClick={() => setPeriod(item.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 period === item.id
-                  ? 'bg-primary-600 text-white shadow-2xs'
-                  : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-surface-200/60 dark:hover:bg-surface-700'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-400/30'
+                  : 'bg-[#131722] text-zinc-400 hover:text-white hover:bg-[#1a2030] border border-white/[0.05]'
               }`}
             >
               {item.label}
@@ -181,21 +181,21 @@ export default function Reports() {
             label="Total Period Spend"
             value={formatAmount(totalSpent)}
             caption="Sum of transactions in window"
-            color="bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400"
+            color="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
             icon={<DollarSign className="w-5 h-5 stroke-[2]" />}
           />
           <StatCard
             label="Transaction Count"
             value={filteredExpenses.length.toLocaleString('en-IN')}
             caption="Entries logged in period"
-            color="bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400"
+            color="bg-purple-500/10 text-purple-400 border border-purple-500/20"
             icon={<Receipt className="w-5 h-5 stroke-[2]" />}
           />
           <StatCard
             label="Average Expenditure"
             value={formatAmount(avgExpense)}
             caption="Mean cost per transaction"
-            color="bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400"
+            color="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
             icon={<TrendingUp className="w-5 h-5 stroke-[2]" />}
           />
         </div>
@@ -203,46 +203,46 @@ export default function Reports() {
 
       {/* ── Grouped Category Table ── */}
       {!loading && !error && categorySummary.length > 0 && (
-        <div className="card p-0 overflow-hidden shadow-xs border border-surface-200/80 dark:border-surface-800">
-          <div className="p-4 border-b border-surface-200/80 dark:border-surface-800 flex items-center justify-between">
+        <div className="bg-[#0e111a] border border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl">
+          <div className="p-5 sm:p-6 border-b border-white/[0.06] flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-surface-900 dark:text-white">
+              <h3 className="text-base font-bold text-white tracking-tight">
                 Category Statement Summary
               </h3>
-              <p className="text-xs text-surface-400 dark:text-surface-500">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 Aggregated category volume for the selected window
               </p>
             </div>
-            <span className="text-xs font-semibold text-surface-500 dark:text-surface-400">
-              {categorySummary.length} Active Categories
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              {categorySummary.length} Categories
             </span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-surface-50 dark:bg-surface-850 text-surface-500 dark:text-surface-400 text-xs font-bold uppercase tracking-wider">
+              <thead className="bg-[#121622] text-zinc-400 text-xs font-bold uppercase tracking-wider border-b border-white/[0.06]">
                 <tr>
-                  <th className="px-5 py-3">Category</th>
-                  <th className="px-5 py-3">Transactions</th>
-                  <th className="px-5 py-3">Total Amount</th>
-                  <th className="px-5 py-3">% of Period Total</th>
+                  <th className="px-6 py-4">Category</th>
+                  <th className="px-6 py-4">Transactions</th>
+                  <th className="px-6 py-4">Total Amount</th>
+                  <th className="px-6 py-4">% of Period Total</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-surface-100 dark:divide-surface-800 bg-white dark:bg-surface-900">
+              <tbody className="divide-y divide-white/[0.05] bg-[#0e111a]">
                 {categorySummary.map((item) => {
                   const pct = totalSpent > 0 ? Math.round((item.total / totalSpent) * 100) : 0;
                   return (
-                    <tr key={item.category} className="hover:bg-surface-50/70 dark:hover:bg-surface-800/50">
-                      <td className="px-5 py-3.5">
+                    <tr key={item.category} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="px-6 py-4">
                         <Badge category={item.category} />
                       </td>
-                      <td className="px-5 py-3.5 text-surface-600 dark:text-surface-400 font-medium">
+                      <td className="px-6 py-4 text-zinc-300 font-medium">
                         {item.count}
                       </td>
-                      <td className="px-5 py-3.5 font-bold text-surface-900 dark:text-white">
+                      <td className="px-6 py-4 font-mono font-bold text-white text-base">
                         {formatAmount(item.total)}
                       </td>
-                      <td className="px-5 py-3.5 text-surface-600 dark:text-surface-400 font-semibold">
+                      <td className="px-6 py-4 text-zinc-400 font-mono font-semibold">
                         {pct}%
                       </td>
                     </tr>

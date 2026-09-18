@@ -2,105 +2,120 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Global resets & base styles ─────────────────────────────────────── */
+/* ── Global Base Styles — Cinematic Dark Fintech ──────────────────────── */
 @layer base {
   *, *::before, *::after {
     box-sizing: border-box;
   }
 
   html {
-    @apply text-surface-900 antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-
-  html.dark {
-    @apply text-surface-100 bg-surface-900;
     color-scheme: dark;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #07080c;
+    color: #f8fafc;
   }
 
   body {
-    @apply bg-surface-50 text-surface-900 m-0 p-0 transition-colors duration-200;
+    background-color: #07080c;
+    color: #f8fafc;
+    margin: 0;
+    padding: 0;
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
-  html.dark body {
-    @apply bg-surface-900 text-surface-100;
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.025em;
+    color: #ffffff;
   }
-
-  h1 { @apply text-2xl font-bold tracking-tight; }
-  h2 { @apply text-xl font-semibold tracking-tight; }
-  h3 { @apply text-lg font-semibold; }
 }
 
-/* ── Reusable component classes ──────────────────────────────────────── */
+/* ── Reusable Component Classes ──────────────────────────────────────── */
 @layer components {
-  /* Card — clean neutral panel with subtle border & shadow */
+  /* Dark Glassmorphic Card / Panel */
   .card {
-    @apply bg-white dark:bg-surface-900 rounded-2xl shadow-sm border border-surface-200/80 dark:border-surface-800 p-6 transition-colors duration-200;
+    background-color: #0f1118;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Primary action button (SaaS indigo accent) */
+  .card:hover {
+    border-color: rgba(255, 255, 255, 0.13);
+  }
+
+  /* Hero Gradient Panel */
+  .hero-panel {
+    background: linear-gradient(135deg, #111420 0%, #0c0e15 100%);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 1.25rem;
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 50px -20px rgba(99, 102, 241, 0.15);
+  }
+
+  /* Primary Action Button (Electric Violet Glow) */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-           bg-primary-600 hover:bg-primary-700 active:bg-primary-800
-           text-white font-medium text-sm shadow-sm
-           transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-surface-900;
+           bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500
+           active:scale-[0.98] text-white font-semibold text-sm shadow-lg shadow-indigo-600/25
+           border border-indigo-400/20 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-[#07080c];
   }
 
-  /* Secondary / outline button */
+  /* Secondary / Outline Button */
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-           bg-white dark:bg-surface-900 text-surface-700 dark:text-surface-300 font-medium text-sm
-           border border-surface-300/90 dark:border-surface-700 shadow-sm
-           hover:bg-surface-50 dark:hover:bg-surface-800 active:bg-surface-100 dark:active:bg-surface-700
+           bg-[#12151f] hover:bg-[#181c29] active:bg-[#1f2434]
+           text-surface-200 hover:text-white font-medium text-sm
+           border border-white/[0.1] shadow-sm
            transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500;
   }
 
-  /* Danger button (delete/destructive actions) */
+  /* Danger Button */
   .btn-danger {
     @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg
-           bg-rose-50 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-medium text-xs
-           border border-rose-200/80 dark:border-rose-900/60
-           hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors duration-150;
+           bg-rose-950/40 hover:bg-rose-900/50 text-rose-300 hover:text-white font-medium text-xs
+           border border-rose-500/30 transition-all duration-150;
   }
 
-  /* Form inputs & selects */
+  /* Dark Form Inputs */
   .form-input {
-    @apply w-full px-3.5 py-2.5 rounded-xl border border-surface-300/80 dark:border-surface-700
-           bg-white dark:bg-surface-900 text-surface-900 dark:text-surface-100 text-sm
-           placeholder:text-surface-400 dark:placeholder:text-surface-500
-           focus:outline-none focus:ring-2 focus:ring-primary-500/80 focus:border-primary-500
+    @apply w-full px-3.5 py-2.5 rounded-xl border border-white/[0.1]
+           bg-[#090b10] text-white text-sm
+           placeholder:text-surface-500
+           focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500
            transition-all duration-150;
   }
 
-  /* Input error state */
+  /* Input Error State */
   .form-input-error {
-    @apply border-red-400 dark:border-red-500 focus:ring-red-400 dark:focus:ring-red-500;
+    @apply border-rose-500 focus:ring-rose-500 focus:border-rose-500;
   }
 
-  /* Form label */
+  /* Form Label */
   .form-label {
-    @apply block text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wider mb-1.5;
+    @apply block text-[11px] font-bold text-surface-400 uppercase tracking-wider mb-1.5;
   }
 
-  /* Inline field error message */
+  /* Inline Field Error Message */
   .field-error {
-    @apply text-xs text-red-500 dark:text-red-400 mt-1 font-medium;
+    @apply text-xs text-rose-400 mt-1 font-medium flex items-center gap-1;
   }
 }
 
-/* ── Custom sleek scrollbar ─────────────────────────────────────────── */
+/* ── Custom Sleek Dark Scrollbar ─────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #07080c;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-surface-300 dark:bg-surface-700 rounded-full;
+  background: #1f2536;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-surface-400 dark:bg-surface-600;
+  background: #323b54;
 }
