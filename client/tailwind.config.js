@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
@@ -16,6 +17,7 @@ export default {
           700: '#4338ca',
           800: '#3730a3',
           900: '#312e81',
+          950: '#1e1b4b',
         },
         // Neutral gray for surfaces
         surface: {
@@ -29,6 +31,7 @@ export default {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
+          950: '#020617',
         },
       },
       fontFamily: {

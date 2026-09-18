@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Check, AlertCircle, PlusCircle } from 'lucide-react';
 import { createExpense } from '../services/api.js';
+import { usePreferences } from '../context/PreferencesContext.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 
 const CATEGORIES = [
@@ -27,7 +29,7 @@ const INITIAL_FORM = {
   paymentMethod: 'UPI',
 };
 
-function validate(values) {
+function validate(values, currencySymbol) {
   const errors = {};
 
   if (!values.title.trim()) {
@@ -41,7 +43,7 @@ function validate(values) {
   } else {
     const num = Number(values.amount);
     if (isNaN(num) || num <= 0) {
-      errors.amount = 'Amount must be greater than ₹0';
+      errors.amount = `Amount must be greater than ${currencySymbol}0`;
     }
   }
 
@@ -66,6 +68,7 @@ function validate(values) {
 
 function AddExpense() {
   const navigate = useNavigate();
+  const { currentCurrency } = usePreferences();
   const [form, setForm] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -85,7 +88,7 @@ function AddExpense() {
     e.preventDefault();
     setServerError(null);
 
-    const validationErrors = validate(form);
+    const validationErrors = validate(form, currentCurrency.symbol);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
@@ -116,32 +119,28 @@ function AddExpense() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* ── Page Header (Identical structure across pages) ── */}
+      {/* ── Page Header ── */}
       <PageHeader
         breadcrumb="Transactions"
         title="Add Expense"
-        subtitle="Record a new expenditure to maintain your financial ledger."
+        subtitle="Record a new transaction to maintain your financial ledger."
         secondaryAction={
           <Link to="/expenses" className="btn-secondary text-xs shadow-2xs">
-            <svg className="w-3.5 h-3.5 text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
+            <ArrowLeft className="w-3.5 h-3.5 text-surface-500" />
             Back to Expenses
           </Link>
         }
       />
 
       {/* ── Main Form Card ── */}
-      <div className="card shadow-sm border border-surface-200">
+      <div className="card shadow-sm border border-surface-200 dark:border-surface-800">
         {/* Server Error Notification */}
         {serverError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-red-800 text-sm">
-            <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+          <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 flex items-start gap-3 text-rose-800 dark:text-rose-300 text-sm">
+            <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold">Unable to Save Record</p>
-              <p className="text-xs text-red-700 mt-0.5">{serverError}</p>
+              <p className="text-xs text-rose-700 dark:text-rose-400 mt-0.5">{serverError}</p>
             </div>
           </div>
         )}
@@ -151,9 +150,9 @@ function AddExpense() {
           <div>
             <label htmlFor="title" className="form-label flex items-center justify-between">
               <span>
-                Expense Title <span className="text-red-500">*</span>
+                Expense Title <span className="text-rose-500">*</span>
               </span>
-              <span className="text-[11px] text-surface-400 font-normal">e.g., Grocery shopping, Uber ride</span>
+              <span className="text-[11px] text-surface-400 font-normal">e.g., Grocery shopping, AWS Hosting</span>
             </label>
             <input
               id="title"
@@ -170,14 +169,14 @@ function AddExpense() {
 
           {/* Grid: Amount + Category */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {/* Amount with INR Prefix */}
+            {/* Amount with Currency Prefix */}
             <div>
               <label htmlFor="amount" className="form-label">
-                Amount <span className="text-red-500">*</span>
+                Amount <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-surface-500 font-semibold text-sm">
-                  ₹
+                  {currentCurrency.symbol}
                 </div>
                 <input
                   id="amount"
@@ -198,7 +197,7 @@ function AddExpense() {
             {/* Category Select */}
             <div>
               <label htmlFor="category" className="form-label">
-                Category <span className="text-red-500">*</span>
+                Category <span className="text-rose-500">*</span>
               </label>
               <select
                 id="category"
@@ -224,7 +223,7 @@ function AddExpense() {
             {/* Date */}
             <div>
               <label htmlFor="date" className="form-label">
-                Date <span className="text-red-500">*</span>
+                Date <span className="text-rose-500">*</span>
               </label>
               <input
                 id="date"
@@ -241,7 +240,7 @@ function AddExpense() {
             {/* Payment Method */}
             <div>
               <label htmlFor="paymentMethod" className="form-label">
-                Payment Method <span className="text-red-500">*</span>
+                Payment Method <span className="text-rose-500">*</span>
               </label>
               <select
                 id="paymentMethod"
@@ -275,7 +274,7 @@ function AddExpense() {
               id="description"
               name="description"
               rows={3}
-              placeholder="Add optional notes, receipt details, or context..."
+              placeholder="Add optional notes, invoice details, or vendor..."
               value={form.description}
               onChange={handleChange}
               disabled={submitting}
@@ -286,7 +285,7 @@ function AddExpense() {
           </div>
 
           {/* Actions: Save & Cancel */}
-          <div className="pt-4 border-t border-surface-100 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-surface-100 dark:border-surface-800 flex items-center justify-end gap-3">
             <Link
               to="/expenses"
               className="btn-secondary text-sm"
@@ -307,9 +306,7 @@ function AddExpense() {
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <PlusCircle className="w-4 h-4" />
                   <span>Save Expense</span>
                 </>
               )}

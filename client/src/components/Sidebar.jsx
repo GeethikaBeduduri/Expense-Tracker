@@ -1,92 +1,77 @@
 import { NavLink } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Receipt,
+  PiggyBank,
+  LineChart,
+  FileText,
+  Settings,
+  Wallet,
+  X,
+} from 'lucide-react';
 
-const MAIN_NAV = [
+const NAV_GROUPS = [
   {
-    id: 'nav-dashboard',
-    label: 'Dashboard',
-    to: '/',
-    icon: (
-      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    ),
+    group: 'Overview',
+    items: [
+      {
+        id: 'nav-dashboard',
+        label: 'Dashboard',
+        to: '/',
+        icon: LayoutDashboard,
+      },
+    ],
   },
   {
-    id: 'nav-expenses',
-    label: 'Expenses',
-    to: '/expenses',
-    icon: (
-      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-    ),
+    group: 'Manage',
+    items: [
+      {
+        id: 'nav-expenses',
+        label: 'Expenses',
+        to: '/expenses',
+        icon: Receipt,
+      },
+      {
+        id: 'nav-budgets',
+        label: 'Budgets',
+        to: '/budgets',
+        icon: PiggyBank,
+      },
+    ],
   },
   {
-    id: 'nav-add-expense',
-    label: 'Add Expense',
-    to: '/add-expense',
-    icon: (
-      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M12 4v16m8-8H4" />
-      </svg>
-    ),
-  },
-];
-
-const FUTURE_NAV = [
-  {
-    id: 'nav-budgets',
-    label: 'Budgets',
-    phase: 'Phase 2',
-    icon: (
-      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-      </svg>
-    ),
+    group: 'Intelligence',
+    items: [
+      {
+        id: 'nav-analytics',
+        label: 'Analytics',
+        to: '/analytics',
+        icon: LineChart,
+      },
+      {
+        id: 'nav-reports',
+        label: 'Reports',
+        to: '/reports',
+        icon: FileText,
+      },
+    ],
   },
   {
-    id: 'nav-analytics',
-    label: 'Analytics',
-    phase: 'Phase 3',
-    icon: (
-      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-      </svg>
-    ),
-  },
-  {
-    id: 'nav-reports',
-    label: 'Reports',
-    phase: 'Phase 4',
-    icon: (
-      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    ),
-  },
-  {
-    id: 'nav-ai-insights',
-    label: 'AI Insights',
-    phase: 'Phase 5',
-    icon: (
-      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
+    group: 'Preferences',
+    items: [
+      {
+        id: 'nav-settings',
+        label: 'Settings',
+        to: '/settings',
+        icon: Settings,
+      },
+    ],
   },
 ];
 
 /**
- * Sidebar — grouped persistent navigation with Phase 1 CRUD & future roadmap previews.
+ * Sidebar — modern, compact SaaS navigation sidebar.
+ * Clean typography, Lucide icons, responsive drawer, zero student/development badges.
  */
 function Sidebar({ isOpen, onClose }) {
   return (
@@ -94,129 +79,95 @@ function Sidebar({ isOpen, onClose }) {
       {/* ── Mobile backdrop overlay ── */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-surface-900/40 backdrop-blur-xs z-30 md:hidden transition-opacity"
+          className="fixed inset-0 bg-surface-950/60 backdrop-blur-xs z-40 md:hidden transition-opacity"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
-      {/* ── Sidebar panel ── */}
+      {/* ── Sidebar container ── */}
       <aside
         className={[
-          'fixed md:static inset-y-0 left-0 z-40',
-          'w-64 bg-white border-r border-surface-200 flex flex-col shrink-0',
-          'transition-transform duration-200 ease-out shadow-lg md:shadow-none',
+          'fixed md:static inset-y-0 left-0 z-50',
+          'w-64 bg-white dark:bg-surface-900 border-r border-surface-200/80 dark:border-surface-800 flex flex-col shrink-0',
+          'transition-transform duration-200 ease-out shadow-xl md:shadow-none',
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         ].join(' ')}
       >
-        {/* ── Logo & App Branding ── */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-surface-200 shrink-0">
+        {/* ── Brand Header ── */}
+        <div className="h-16 flex items-center justify-between px-5 border-b border-surface-200/80 dark:border-surface-800 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center text-white shadow-xs">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+              <Wallet className="w-5 h-5 text-white stroke-[2.2]" />
             </div>
             <div>
-              <span className="font-bold text-surface-900 text-base leading-tight block">ExpenseTracker</span>
-              <span className="text-[11px] font-medium text-surface-400 block">Personal Finance Ledger</span>
+              <span className="font-bold text-surface-900 dark:text-white text-base tracking-tight leading-tight block">
+                ExpenseTracker
+              </span>
+              <span className="text-[11px] font-medium text-surface-400 dark:text-surface-500 block">
+                Smart Personal Finance
+              </span>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="md:hidden p-1.5 rounded-lg text-surface-400 hover:text-surface-700 hover:bg-surface-100"
-            aria-label="Close sidebar"
+            className="md:hidden p-1.5 rounded-lg text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+            aria-label="Close navigation"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* ── Navigation Links ── */}
-        <div className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
-          {/* Main Navigation */}
-          <div>
-            <p className="text-[11px] font-semibold text-surface-400 uppercase tracking-wider px-3 mb-2">
-              Main Menu
-            </p>
-            <nav className="space-y-1">
-              {MAIN_NAV.map((item) => (
-                <NavLink
-                  key={item.id}
-                  id={item.id}
-                  to={item.to}
-                  end={item.to === '/'}
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    [
-                      'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
-                      isActive
-                        ? 'bg-primary-50 text-primary-700 font-semibold shadow-2xs'
-                        : 'text-surface-600 hover:bg-surface-50 hover:text-surface-900',
-                    ].join(' ')
-                  }
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-
-          {/* Upcoming Modules (Roadmap Only — Never Fake Functional) */}
-          <div>
-            <div className="flex items-center justify-between px-3 mb-2">
-              <p className="text-[11px] font-semibold text-surface-400 uppercase tracking-wider">
-                Upcoming Modules
+        {/* ── Grouped Navigation ── */}
+        <div className="flex-1 px-3 py-5 space-y-6 overflow-y-auto">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.group}>
+              <p className="text-[11px] font-semibold text-surface-400 dark:text-surface-500 uppercase tracking-wider px-3 mb-1.5">
+                {group.group}
               </p>
+              <nav className="space-y-0.5">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.id}
+                      id={item.id}
+                      to={item.to}
+                      end={item.to === '/'}
+                      onClick={onClose}
+                      className={({ isActive }) =>
+                        [
+                          'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
+                          isActive
+                            ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 font-semibold shadow-2xs'
+                            : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100/70 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-white',
+                        ].join(' ')
+                      }
+                    >
+                      <Icon className="w-4 h-4 shrink-0 stroke-[2]" />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  );
+                })}
+              </nav>
             </div>
-            <div className="space-y-1">
-              {FUTURE_NAV.map((item) => (
-                <div
-                  key={item.id}
-                  id={item.id}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-surface-400 cursor-not-allowed select-none hover:bg-surface-50/50 transition-colors"
-                  title={`${item.label} — Planned for ${item.phase}`}
-                >
-                  <div className="flex items-center gap-3">
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </div>
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-surface-100 text-surface-500 border border-surface-200">
-                    {item.phase}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* ── Architecture Card ── */}
-        <div className="p-3 border-t border-surface-200 shrink-0">
-          <div className="p-3 bg-surface-50 rounded-xl border border-surface-200 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-surface-900">Phase 1 · MERN</span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                Active
-              </span>
+        {/* ── User Profile Footer ── */}
+        <div className="p-3 border-t border-surface-200/80 dark:border-surface-800 shrink-0">
+          <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-50 dark:hover:bg-surface-800/60 transition-colors cursor-pointer">
+            <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/60 text-primary-700 dark:text-primary-300 flex items-center justify-center font-bold text-xs">
+              JD
             </div>
-            <div className="space-y-1 text-[11px] text-surface-500 border-t border-surface-200/60 pt-1.5">
-              <div className="flex justify-between">
-                <span className="text-surface-400">Frontend:</span>
-                <span className="font-medium text-surface-700">React 18 + Vite</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-surface-400">Backend:</span>
-                <span className="font-medium text-surface-700">Express 4 REST</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-surface-400">Database:</span>
-                <span className="font-medium text-surface-700">MongoDB + Mongoose</span>
-              </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-surface-900 dark:text-white truncate">
+                Personal Workspace
+              </p>
+              <p className="text-[11px] text-surface-400 dark:text-surface-500 truncate">
+                finance@workspace.io
+              </p>
             </div>
           </div>
         </div>
